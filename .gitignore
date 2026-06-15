@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Environment variables — never commit API keys
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Production build
+build/
+
+# Aiken build output — copy plutus.json to public/data/ manually after build
+/plutus.json
+artifacts/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+*.pem

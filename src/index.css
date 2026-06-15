@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  font-variant: small-caps;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
+}
+
+button, input, select, textarea {
+  font-family: Arial, sans-serif;
+  font-variant: small-caps;
+}
+
+.App {
+  min-height: 100vh;
+}
