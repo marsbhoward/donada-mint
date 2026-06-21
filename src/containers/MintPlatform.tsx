@@ -168,6 +168,19 @@ const WALLET_BRAND_COLORS: Record<string, string> = {
   nufi: '#4f46e5', begin: '#06b6d4',
 };
 
+const WALLET_DOWNLOADS: { key: string; name: string; url: string }[] = [
+  { key: 'eternl',     name: 'Eternl',     url: 'https://eternl.io' },
+  { key: 'lace',       name: 'Lace',       url: 'https://www.lace.io' },
+  { key: 'vespr',      name: 'Vespr',      url: 'https://vespr.xyz' },
+  { key: 'nami',       name: 'Nami',       url: 'https://namiwallet.io' },
+  { key: 'flint',      name: 'Flint',      url: 'https://flint-wallet.com' },
+  { key: 'typhon',     name: 'Typhon',     url: 'https://typhonwallet.io' },
+  { key: 'yoroi',      name: 'Yoroi',      url: 'https://yoroi-wallet.com' },
+  { key: 'gerowallet', name: 'GeroWallet', url: 'https://gerowallet.io' },
+  { key: 'nufi',       name: 'NuFi',       url: 'https://nu.fi' },
+  { key: 'begin',      name: 'Begin',      url: 'https://begin.is' },
+];
+
 function getAvailableWallets(): WalletInfo[] {
   const cardano = (window as any).cardano;
   if (!cardano) return [];
@@ -233,6 +246,7 @@ export default function MintPlatform() {
   const [txConfirm, setTxConfirm]       = useState<{ title: string; txHash: string } | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
   const [walletNotice, setWalletNotice]   = useState<string | null>(null);
+  const [showNoWalletModal, setShowNoWalletModal] = useState(false);
 
   const raiseWalletNotice = (err: unknown) => {
     const code = (err as any)?.code;
@@ -374,6 +388,7 @@ export default function MintPlatform() {
       return;
     }
     const detected = getAvailableWallets();
+    if (detected.length === 0) { setShowNoWalletModal(true); return; }
     setWallets(detected);
     if (detected.length === 1) connectWallet(detected[0].key);
   };
@@ -622,7 +637,7 @@ export default function MintPlatform() {
               onClick={handleSignBtnClick}
               disabled={signBtnAnim !== 'idle'}
             >
-              {connectedWallet ? 'Disconnect Wallet' : 'Sign in with Wallet'}
+              {connectedWallet ? 'Disconnect Wallet' : 'Sign In'}
             </button>
           </div>
           <span className="user-label">
@@ -983,6 +998,32 @@ export default function MintPlatform() {
             <button className="select-btn" onClick={() => setDisclaimerDeclined(false)}>
               Go Back
             </button>
+          </div>
+        </div>
+      )}
+
+      {showNoWalletModal && (
+        <div className="connect-prompt-overlay" onClick={() => setShowNoWalletModal(false)}>
+          <div className="connect-prompt" onClick={e => e.stopPropagation()}>
+            <button className="connect-prompt-close" onClick={() => setShowNoWalletModal(false)}>✕</button>
+            <p className="connect-prompt-title">No Wallet Detected</p>
+            <p className="connect-prompt-body">
+              No Cardano wallet extension was found in your browser. Install one to get started.
+            </p>
+            <div className="no-wallet-links">
+              {WALLET_DOWNLOADS.map(({ key, name, url }) => (
+                <a
+                  key={key}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-wallet-link"
+                  style={{ '--wallet-color': WALLET_BRAND_COLORS[key] ?? '#111' } as React.CSSProperties}
+                >
+                  {name}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       )}
