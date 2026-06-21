@@ -2,6 +2,6 @@
   "collectionName": "DONADA Mint",
   "policyId": "",
   "mintPriceLovelace": 498000000,
-  "maxSupply": 100,
+  "maxSupply": 1000,
   "description": "DONADA on-demand NFT collection on Cardano"
 }

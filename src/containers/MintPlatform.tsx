@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import TxConfirmModal from '../components/TxConfirmModal';
 import DisclaimerModal from '../components/DisclaimerModal';
 import {
@@ -7,6 +7,7 @@ import {
   fromText, fromHex, toHex,
   Data, Constr,
   applyDoubleCborEncoding, mintingPolicyToId,
+  makeWalletFromAPI,
   type Script, type WalletApi,
 } from '@lucid-evolution/lucid';
 
@@ -183,7 +184,8 @@ export default function MintPlatform() {
   // Wallet
   const [wallets, setWallets]                     = useState<WalletInfo[]>([]);
   const [connectedWallet, setConnectedWallet]     = useState<ConnectedWalletState | null>(null);
-  const connectedWalletRef                        = useRef<ConnectedWalletState | null>(null);
+  const connectedWalletRef = useRef<ConnectedWalletState | null>(null);
+  const carouselTouchRef  = useRef({ startX: 0 });
   const [fullWalletAddress, setFullWalletAddress] = useState<string | null>(null);
 
   // Disclaimer
@@ -199,8 +201,15 @@ export default function MintPlatform() {
     setDisclaimerDeclined(true);
   };
 
-  // Theme
-  const [isDarkMode, setIsDarkMode]   = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
+  // Theme — dark by default, persisted in localStorage, synced to data-theme on <html>
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const stored = localStorage.getItem('theme');
+    return stored ? stored === 'dark' : true;
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
   const [isDimming, setIsDimming]     = useState(false);
   const [signBtnAnim, setSignBtnAnim] = useState<'idle' | 'out' | 'in'>('idle');
 
@@ -219,9 +228,17 @@ export default function MintPlatform() {
   const [mintError, setMintError]       = useState<string | null>(null);
   const [mintWarning, setMintWarning]   = useState<string | null>(null);
   const [mintedSlots, setMintedSlots]   = useState<CollectionSlot[]>([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const [mintQuantity, setMintQuantity] = useState(1);
   const [txConfirm, setTxConfirm]       = useState<{ title: string; txHash: string } | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [walletNotice, setWalletNotice]   = useState<string | null>(null);
+
+  const raiseWalletNotice = (err: unknown) => {
+    const code = (err as any)?.code;
+    if (code === -3) setWalletNotice('locked');
+    else if (code === -2) setWalletNotice('disconnected');
+  };
 
   // Admin
   const isAdmin = fullWalletAddress === PROJECT_WALLET_ADDRESS;
@@ -264,6 +281,37 @@ export default function MintPlatform() {
   const available = collection.filter(s => s.ipfsCid && !mintedNames.has(s.name));
   const totalSupply = collection.filter(s => s.ipfsCid).length;
   const totalMinted = mintedNames.size;
+
+  // Coverflow carousel items — mirrors RentModal visibleItems logic
+  const carouselItems = useMemo(() => {
+    const total = mintedSlots.length;
+    if (total < 2) return [];
+    const maxVisible = total <= 3 ? 3 : 5;
+    const sideCount = Math.floor(maxVisible / 2);
+    const items: { slot: CollectionSlot; index: number; position: string }[] = [];
+    for (let offset = -sideCount; offset <= sideCount; offset++) {
+      const index = (previewIndex + offset + total) % total;
+      items.push({
+        slot: mintedSlots[index],
+        index,
+        position: offset === 0 ? 'active' : offset < 0 ? `left-${Math.abs(offset)}` : `right-${offset}`,
+      });
+    }
+    return items;
+  }, [mintedSlots, previewIndex]);
+
+  // Keyboard navigation for carousel
+  useEffect(() => {
+    if (mintedSlots.length < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT') return;
+      const total = mintedSlots.length;
+      if (e.key === 'ArrowLeft')  setPreviewIndex(i => (i - 1 + total) % total);
+      if (e.key === 'ArrowRight') setPreviewIndex(i => (i + 1) % total);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mintedSlots]);
 
   // Invalidate caches on network change
   useEffect(() => { _lucidCachePromise = null; _lucidCacheNetwork = null; _policyCache = null; }, [network]);
@@ -332,15 +380,16 @@ export default function MintPlatform() {
 
   const connectWallet = async (key: string) => {
     try {
-      const api = await (window as any).cardano[key].enable();
-      // Lucid without a provider resolves the address via CIP-30 only (no Blockfrost needed)
-      const l = await Lucid(undefined, network);
-      l.selectWallet.fromAPI(api as WalletApi);
-      const address = await l.wallet().address();
+      const api     = await (window as any).cardano[key].enable();
+      // makeWalletFromAPI decodes the CIP-30 address via CML (no provider/Blockfrost needed)
+      const address = await makeWalletFromAPI({} as any, api as WalletApi).address();
       setConnectedWallet({ name: key, api });
       setFullWalletAddress(address ?? null);
       setWallets([]);
-    } catch (err) { console.error('Wallet connect error:', err); }
+    } catch (err) {
+      console.error('Wallet connect error:', err);
+      raiseWalletNotice(err);
+    }
   };
 
   useEffect(() => { connectedWalletRef.current = connectedWallet; }, [connectedWallet]);
@@ -438,6 +487,7 @@ export default function MintPlatform() {
         .filter(d => d.mintCount > 1)
       );
     } catch (err) {
+      raiseWalletNotice(err);
       const msg = err instanceof Error ? err.message : String(err);
       setBurnResults(prev => ({ ...prev, [slotName]: `Error: ${msg}` }));
     } finally {
@@ -514,6 +564,7 @@ export default function MintPlatform() {
       });
 
       setMintedSlots(slots);
+      setPreviewIndex(0);
       setTxConfirm({
         title: slots.length > 1 ? `${slots.length} NFTs Minted!` : 'NFT Minted!',
         txHash,
@@ -525,10 +576,14 @@ export default function MintPlatform() {
       }
     } catch (err) {
       console.error('Mint failed:', err);
-      const msg = err instanceof Error ? err.message : String(err);
-      setMintError(msg.includes('ValueNotConservedUTxO') || msg.includes('BadInputsUTxO')
-        ? 'That slot was just taken — please try again.'
-        : msg);
+      raiseWalletNotice(err);
+      const code = (err as any)?.code;
+      if (code !== -2 && code !== -3) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setMintError(msg.includes('ValueNotConservedUTxO') || msg.includes('BadInputsUTxO')
+          ? 'That slot was just taken — please try again.'
+          : msg);
+      }
     } finally {
       setIsMinting(false);
     }
@@ -539,7 +594,7 @@ export default function MintPlatform() {
   const canMint = !!connectedWallet && available.length > 0 && !isMinting && !!policyId && !countdown;
 
   return (
-    <div className={`app-container${isDarkMode ? ' dark-mode' : ''}${isDimming ? ' dimming' : ''}`}>
+    <div className={`app-container${isDimming ? ' dimming' : ''}`}>
       <header className="header">
         <div className="logo-group">
           <h1 className="logo">
@@ -547,7 +602,14 @@ export default function MintPlatform() {
           </h1>
           <button className="theme-toggle" onClick={() => {
             setIsDimming(true);
-            setTimeout(() => { setIsDarkMode(d => !d); setIsDimming(false); }, 150);
+            setTimeout(() => {
+              setIsDarkMode(d => {
+                const next = !d;
+                localStorage.setItem('theme', next ? 'dark' : 'light');
+                return next;
+              });
+              setIsDimming(false);
+            }, 150);
           }}>
             {isDarkMode ? '[dark]' : '[light]'}
           </button>
@@ -568,6 +630,21 @@ export default function MintPlatform() {
           </span>
         </div>
       </header>
+
+      {walletNotice && (
+        <div className="wallet-notice" role="alert">
+          <button className="wallet-notice-close" onClick={() => setWalletNotice(null)} aria-label="Dismiss">✕</button>
+          <p className="wallet-notice-title">Wallet Connection Issue</p>
+          <p className="wallet-notice-body">
+            {walletNotice === 'locked'
+              ? 'Your wallet is locked. Please unlock it and refresh the page to reconnect.'
+              : 'The wallet connection was lost. Please reconnect the dapp in your wallet extension, then refresh the page.'}
+          </p>
+          <button className="wallet-notice-refresh" onClick={() => window.location.reload()}>
+            Refresh Page
+          </button>
+        </div>
+      )}
 
       {wallets.length > 1 && !connectedWallet && (
         <div className="wallet-list">
@@ -618,17 +695,43 @@ export default function MintPlatform() {
                     </span>
                   </div>
                 ) : mintedSlots.length > 0 ? (
-                  <div className={`nft-minted-grid count-${mintedSlots.length}`}>
-                    {mintedSlots.map(slot => (
+                  <div className="nft-minted-carousel">
+                    {/* Large preview — always shows the active slot */}
+                    <div
+                      className="nft-minted-preview"
+                      onClick={() => setEnlargedImage(`https://ipfs.blockfrost.dev/ipfs/${mintedSlots[previewIndex].ipfsCid}`)}
+                    >
+                      <img
+                        src={`https://ipfs.blockfrost.dev/ipfs/${mintedSlots[previewIndex].ipfsCid}`}
+                        alt={mintedSlots[previewIndex].name}
+                      />
+                      <div className="nft-minted-preview-label">{mintedSlots[previewIndex].name}</div>
+                    </div>
+                    {/* Coverflow carousel — only when multiple NFTs minted */}
+                    {mintedSlots.length > 1 && (
                       <div
-                        key={slot.name}
-                        className="nft-minted-thumb"
-                        onClick={() => setEnlargedImage(`https://ipfs.blockfrost.dev/ipfs/${slot.ipfsCid}`)}
-                        title={slot.name}
+                        className={`nft-minted-coverflow count-${mintedSlots.length}`}
+                        style={{ touchAction: 'pan-y' }}
+                        onTouchStart={e => { carouselTouchRef.current.startX = e.touches[0].clientX; }}
+                        onTouchEnd={e => {
+                          const delta = e.changedTouches[0].clientX - carouselTouchRef.current.startX;
+                          if (Math.abs(delta) < 30) return;
+                          const total = mintedSlots.length;
+                          setPreviewIndex(i => delta < 0 ? (i + 1) % total : (i - 1 + total) % total);
+                        }}
                       >
-                        <img src={`https://ipfs.blockfrost.dev/ipfs/${slot.ipfsCid}`} alt={slot.name} />
+                        {carouselItems.map(({ slot, index, position }) => (
+                          <div
+                            key={position}
+                            className={`nft-minted-cf-frame ${position}`}
+                            onClick={() => setPreviewIndex(index)}
+                          >
+                            <img src={`https://ipfs.blockfrost.dev/ipfs/${slot.ipfsCid}`} alt={slot.name} />
+                            {position !== 'active' && <div className="nft-minted-cf-dim" />}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 ) : (
                   <div className={`nft-image-inner${featuredNftImage ? ' has-image' : ''}`}>
@@ -637,17 +740,19 @@ export default function MintPlatform() {
                       : statsLoading ? 'Loading…' : 'NFT IMAGE'}
                   </div>
                 )}
-                <div className="nft-details">
-                  <p className="mint-name">Collection: {COLLECTION_NAME}</p>
-                  {policyId && (
-                    <p className="policy-id" title={policyId}>
-                      Policy: {policyId.slice(0, 10)}…{policyId.slice(-8)}
+                {mintedSlots.length === 0 && (
+                  <div className="nft-details">
+                    <p className="mint-name">Collection: {COLLECTION_NAME}</p>
+                    {policyId && (
+                      <p className="policy-id" title={policyId}>
+                        Policy: {policyId.slice(0, 10)}…{policyId.slice(-8)}
+                      </p>
+                    )}
+                    <p className="meta">
+                      {statsLoading ? 'Loading…' : `${totalMinted} / ${totalSupply || '—'} minted`}
                     </p>
-                  )}
-                  <p className="meta">
-                    {statsLoading ? 'Loading…' : `${totalMinted} / ${totalSupply || '—'} minted`}
-                  </p>
-                </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -662,10 +767,10 @@ export default function MintPlatform() {
                 <button className="price-info-toggle" onClick={() => setPriceExpanded(x => !x)} aria-label="Price details">
                   {priceExpanded ? '−' : '+'}
                 </button>
-                <p className={`price-info-text${priceExpanded ? '' : ' price-info-hidden'}`}>
-                  Fees included — total should come to around ₳ 500, but may be slightly over depending on network conditions.
-                </p>
               </div>
+              <p className={`price-info-text${priceExpanded ? '' : ' price-info-hidden'}`}>
+                Fees included — total should come to around ₳ 500, but may be slightly over depending on network conditions.
+              </p>
             </div>
 
             {/* Top-right */}
@@ -691,10 +796,10 @@ export default function MintPlatform() {
                 <button className="price-info-toggle" onClick={() => setJackpotExpanded(x => !x)} aria-label="Jackpot details">
                   {jackpotExpanded ? '−' : '+'}
                 </button>
-                <p className={`price-info-text${jackpotExpanded ? '' : ' price-info-hidden'}`}>
-                  Jackpot reflects 20% of total mint revenue at the time this page was loaded. The full jackpot is distributed across 4 quarterly drawings.
-                </p>
               </div>
+              <p className={`price-info-text${jackpotExpanded ? '' : ' price-info-hidden'}`}>
+                Jackpot reflects 20% of total mint revenue at the time this page was loaded. The full jackpot is distributed across 4 quarterly drawings.
+              </p>
             </div>
 
             {/* Bottom-right */}
