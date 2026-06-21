@@ -800,7 +800,7 @@ export default function MintPlatform() {
             <hr className="section-break grid-hr" />
 
             {/* Bottom-left */}
-            <div className="info-block info-block-bottom">
+            <div className="info-block">
               <p className="label">Jackpot</p>
               <div className="price-value-row">
                 <p className="value">
@@ -818,7 +818,7 @@ export default function MintPlatform() {
             </div>
 
             {/* Bottom-right */}
-            <div className="info-block info-block-bottom">
+            <div className="info-block">
               {!connectedWallet ? (
                 <div className="action-text">Connect your wallet to mint</div>
               ) : available.length === 0 && !statsLoading ? (
