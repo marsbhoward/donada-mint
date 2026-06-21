@@ -685,7 +685,7 @@ export default function MintPlatform() {
           <div className="nft-top-row">
             {/* Featured image */}
             <div className="nft-image">
-              <div className={`nft-image-frame${countdown ? ' countdown-active' : ''}`}>
+              <div className={`nft-image-frame${countdown ? ' countdown-active' : ''}${mintedSlots.length > 0 ? ' minted-active' : ''}`}>
                 {countdown ? (
                   <div className={`nft-image-inner nft-countdown${countdownFading ? ' fading' : ''}`}>
                     <div className="countdown-label">Minting opens in</div>
@@ -890,6 +890,24 @@ export default function MintPlatform() {
                   onClick={() => setNetwork(n => n === 'Mainnet' ? 'Preview' : 'Mainnet')}
                 >
                   {network}
+                </button>
+              </label>
+              <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Post-mint preview:
+                <button
+                  className="select-btn"
+                  style={{ padding: '0.2rem 0.75rem', fontSize: '0.8rem' }}
+                  onClick={() => {
+                    if (mintedSlots.length > 0) {
+                      setMintedSlots([]);
+                      setPreviewIndex(0);
+                    } else {
+                      setMintedSlots(collection.slice(0, 4));
+                      setPreviewIndex(0);
+                    }
+                  }}
+                >
+                  {mintedSlots.length > 0 ? 'Clear' : 'Preview Minted'}
                 </button>
               </label>
             </div>
