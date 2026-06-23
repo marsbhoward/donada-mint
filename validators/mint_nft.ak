@@ -41,7 +41,7 @@ const mint_price: Int = 498_000_000
 /// Payment key hash of the project wallet.
 /// Derived from addr_test1qz8a7xrhfh845uw0qvcvkll6m4p2ntyexghz2etpk4gpknm8x3f9dwp37v9xese67nv0nnczvkzqh60z30n6v9cw2fasq4l388
 const project_wallet_pkh: ByteArray =
-  #"8fdf18774dcf5a71cf0330cb7ffadd42a9ac99322e256561b5501b4f"
+  #"e6b8e74071a9aca97e0019467625d370de2df089162590fdcbeaf47a"
 
 // ── Validator ─────────────────────────────────────────────────────────────────
 
@@ -60,28 +60,26 @@ validator mint_nft {
 
       // Rule 1: 1–5 unique tokens minted, each with quantity exactly 1
       let token_count = dict.size(mints)
-      let each_quantity_is_one =
-        mints
-          |> dict.values()
-          |> list.all(fn(qty) { qty == 1 })
+      let each_quantity_is_one = mints
+        |> dict.values()
+        |> list.all(fn(qty) { qty == 1 })
 
       // Rule 2: mint price × quantity paid to project wallet
-      let total_to_project =
-        list.foldl(
-          tx.outputs,
-          0,
-          fn(output: Output, acc: Int) -> Int {
-            when output.address.payment_credential is {
-              VerificationKey(pkh) ->
-                if pkh == project_wallet_pkh {
-                  acc + assets.lovelace_of(output.value)
-                } else {
-                  acc
-                }
-              _ -> acc
-            }
-          },
-        )
+      let total_to_project = list.foldl(
+        tx.outputs,
+        0,
+        fn(output: Output, acc: Int) -> Int {
+          when output.address.payment_credential is {
+            VerificationKey(pkh) ->
+              if pkh == project_wallet_pkh {
+                acc + assets.lovelace_of(output.value)
+              } else {
+                acc
+              }
+            _ -> acc
+          }
+        },
+      )
 
       token_count >= 1 && token_count <= 5 && each_quantity_is_one && total_to_project >= mint_price * token_count
     }
