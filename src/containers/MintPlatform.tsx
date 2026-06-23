@@ -4,11 +4,11 @@ import TxConfirmModal from '../components/TxConfirmModal';
 import DisclaimerModal from '../components/DisclaimerModal';
 import {
   Lucid, type LucidEvolution, Blockfrost,
-  fromText, fromHex, toHex,
+  fromText,
   Data, Constr,
   applyDoubleCborEncoding, mintingPolicyToId,
   makeWalletFromAPI,
-  type Script, type WalletApi,
+  type WalletApi,
 } from '@lucid-evolution/lucid';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -263,9 +263,26 @@ export default function MintPlatform() {
   const [burnResults, setBurnResults]           = useState<Record<string, string>>({});
   const [priceExpanded, setPriceExpanded]       = useState(false);
   const [jackpotExpanded, setJackpotExpanded]   = useState(false);
+  const infoSectionsRef = useRef<HTMLDivElement>(null);
 
-  // Launch countdown — 2026-06-11 7:20 PM CDT (UTC-5) = 2026-06-12T00:20:00Z
-  const LAUNCH_DATE = new Date('2026-06-12T00:20:00Z');
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (window.innerWidth > 820) return;
+      if (infoSectionsRef.current && !infoSectionsRef.current.contains(e.target as Node)) {
+        setPriceExpanded(false);
+        setJackpotExpanded(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    document.addEventListener('touchstart', handleOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      document.removeEventListener('touchstart', handleOutside);
+    };
+  }, []);
+
+  // Launch countdown — 2026-07-31 3:00 PM CDT (UTC-5) = 2026-07-31T20:00:00Z
+  const LAUNCH_DATE = new Date('2026-07-31T20:00:00Z');
   const [countdown, setCountdown] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(() => {
     const diff = LAUNCH_DATE.getTime() - Date.now();
     if (diff <= 0) return null;
@@ -626,7 +643,23 @@ export default function MintPlatform() {
               setIsDimming(false);
             }, 150);
           }}>
-            {isDarkMode ? '[dark]' : '[light]'}
+            {isDarkMode ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            )}
           </button>
         </div>
 
@@ -773,13 +806,13 @@ export default function MintPlatform() {
 
           </div>
 
-          <div className="info-sections">
+          <div className="info-sections" ref={infoSectionsRef}>
             {/* Top-left */}
             <div className="info-block">
               <p className="label">Mint Price</p>
               <div className="price-value-row">
                 <p className="value">~₳ 500</p>
-                <button className="price-info-toggle" onClick={() => setPriceExpanded(x => !x)} aria-label="Price details">
+                <button className="price-info-toggle" onClick={() => { setPriceExpanded(x => { const next = !x; if (next && window.innerWidth <= 820) setJackpotExpanded(false); return next; }); }} aria-label="Price details">
                   {priceExpanded ? '−' : '+'}
                 </button>
               </div>
@@ -808,7 +841,7 @@ export default function MintPlatform() {
                     ? '—'
                     : `₳ ${((totalMinted * Number(MINT_PRICE_LOVELACE) / 1_000_000) * JACKPOT_PERCENT).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                 </p>
-                <button className="price-info-toggle" onClick={() => setJackpotExpanded(x => !x)} aria-label="Jackpot details">
+                <button className="price-info-toggle" onClick={() => { setJackpotExpanded(x => { const next = !x; if (next && window.innerWidth <= 820) setPriceExpanded(false); return next; }); }} aria-label="Jackpot details">
                   {jackpotExpanded ? '−' : '+'}
                 </button>
               </div>

@@ -22,8 +22,9 @@
   --nav-border:     rgba(0,0,0,0.06);
 }
 
-html { height: 100%; }
-body { min-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+html { height: 100%; overflow: hidden; }
+body { height: 100%; overflow: hidden; }
+#root { height: 100%; }
 
 .app-container {
   font-family: 'Geist', system-ui, sans-serif;
@@ -31,11 +32,12 @@ body { min-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   line-height: 150%;
   background: var(--bg-page);
   color: var(--text-primary);
-  min-height: 100vh;
+  height: 100%;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   opacity: 1;
   transition: opacity 0.15s ease;
 }
@@ -64,16 +66,15 @@ body { min-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .logo-group {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
-  gap: 0;
+  gap: 4px;
 }
 
 .logo {
   font-size: 2rem;
   font-weight: 700;
   margin: 0;
-  padding-bottom: 8px;
+  text-align: center;
 }
 
 .logo a {
@@ -405,10 +406,20 @@ body { min-height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   border-radius: 16px;
   padding: 18px 12px;
   box-sizing: border-box;
-  background: linear-gradient(145deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%);
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 4px 32px rgba(0,0,0,0.25);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.42) 55%, rgba(255,255,255,0.64) 100%);
+  backdrop-filter: blur(32px) saturate(2.0) brightness(1.06);
+  -webkit-backdrop-filter: blur(32px) saturate(2.0) brightness(1.06);
+  border: 1px solid rgba(255,255,255,0.80);
+  border-top-color: rgba(255,255,255,1);
+  border-left-color: rgba(255,255,255,0.90);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,1),
+    inset 1px 0 0 rgba(255,255,255,0.70),
+    inset 0 -1px 0 rgba(255,255,255,0.30),
+    0 8px 32px rgba(0,0,0,0.09),
+    0 2px 5px rgba(0,0,0,0.06);
 }
 
 .holdings-total {
@@ -914,11 +925,20 @@ button:focus { outline: 3px solid rgba(0,0,0,0.08); }
 }
 
 .modal-sheet {
-  background: rgba(255,255,255,0.94);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.42) 55%, rgba(255,255,255,0.64) 100%);
+  backdrop-filter: blur(32px) saturate(2.0) brightness(1.06);
+  -webkit-backdrop-filter: blur(32px) saturate(2.0) brightness(1.06);
   border: 1px solid rgba(255,255,255,0.80);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 24px 48px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.05);
+  border-top-color: rgba(255,255,255,1);
+  border-left-color: rgba(255,255,255,0.90);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,1),
+    inset 1px 0 0 rgba(255,255,255,0.70),
+    inset 0 -1px 0 rgba(255,255,255,0.30),
+    0 24px 48px rgba(0,0,0,0.10),
+    0 2px 8px rgba(0,0,0,0.05);
   border-radius: 20px;
   padding: 20px;
   max-width: 420px;
@@ -1080,20 +1100,42 @@ button:focus { outline: 3px solid rgba(0,0,0,0.08); }
 }
 
 [data-theme="dark"] .holdings-panel {
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.25);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+  background: linear-gradient(160deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 55%, rgba(255,255,255,0.10) 100%);
+  backdrop-filter: blur(32px) saturate(2.2) brightness(1.08);
+  -webkit-backdrop-filter: blur(32px) saturate(2.2) brightness(1.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-top-color: rgba(255,255,255,0.38);
+  border-left-color: rgba(255,255,255,0.22);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.45),
+    inset 1px 0 0 rgba(255,255,255,0.14),
+    inset 0 -1px 0 rgba(255,255,255,0.05),
+    0 8px 32px rgba(0,0,0,0.22),
+    0 2px 6px rgba(0,0,0,0.14);
+}
+[data-theme="dark"] .holdings-panel::before {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 30%, transparent 60%);
 }
 [data-theme="dark"] .wallet-list    { background: var(--bg-page); }
 [data-theme="dark"] .wallet-icon-btn { background: var(--bg-raised); }
 [data-theme="dark"] .wallet-icon-btn__fallback { color: #f5f5f5; }
 
 [data-theme="dark"] .modal-sheet {
-  background: linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10), 0 24px 48px rgba(0,0,0,0.55);
+  background: linear-gradient(160deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 55%, rgba(255,255,255,0.10) 100%);
+  backdrop-filter: blur(32px) saturate(2.2) brightness(1.08);
+  -webkit-backdrop-filter: blur(32px) saturate(2.2) brightness(1.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-top-color: rgba(255,255,255,0.38);
+  border-left-color: rgba(255,255,255,0.22);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.45),
+    inset 1px 0 0 rgba(255,255,255,0.14),
+    inset 0 -1px 0 rgba(255,255,255,0.05),
+    0 24px 48px rgba(0,0,0,0.55),
+    0 2px 6px rgba(0,0,0,0.14);
+}
+[data-theme="dark"] .modal-sheet::before {
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 30%, transparent 60%);
 }
 
 [data-theme="dark"] .modal-backdrop { background: rgba(0,0,0,0.75); }
@@ -1236,10 +1278,83 @@ button:focus { outline: 3px solid rgba(0,0,0,0.08); }
   .info-block .label { margin-bottom: 2px; font-size: 0.82rem; }
   .info-block .value { font-size: 0.88rem; }
 
+  /* price-info tooltip: absolute below the toggle row, out of grid flow */
+  .price-info-text {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    transform: none;
+    width: auto;
+    max-width: none;
+    z-index: 30;
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 10px;
+    margin-top: 0;
+    box-sizing: border-box;
+    transition: max-height 0.25s ease, padding 0.2s ease, opacity 0.18s ease;
+  }
+  .price-info-text:not(.price-info-hidden) {
+    max-height: 10rem;
+    padding: 7px 10px;
+    margin-top: 4px;
+  }
+
   .section-break { margin: 6px 0; }
   .mint-name  { font-size: clamp(11px, 3.2vw, 15px); }
   .policy-id  { font-size: clamp(10px, 2.6vw, 12px); }
   .meta       { font-size: clamp(9px,  2.4vw, 11px); }
   .action-text { font-size: 1rem; }
   .action-block { gap: 8px; }
+}
+
+/* ── Grain texture overlay ───────────────────────────────────────────────── */
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 220px;
+  opacity: 0.018;
+}
+[data-theme="dark"] body::after { opacity: 0.035; }
+
+/* ── Amber accent ────────────────────────────────────────────────────────── */
+
+:root { --amber: #c49a2f; }
+[data-theme="dark"] { --amber: #c49a2f; }
+
+/* ── Holdings panel / modal-sheet sheen + hover lift ────────────────────── */
+
+.holdings-panel::before,
+.modal-sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.18) 30%, transparent 60%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.holdings-panel,
+.modal-sheet {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .holdings-panel {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+[data-theme="dark"] .holdings-panel:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,0.55),
+    inset 1px 0 0 rgba(255,255,255,0.20),
+    inset 0 -1px 0 rgba(255,255,255,0.08),
+    0 16px 48px rgba(0,0,0,0.30),
+    0 4px 10px rgba(0,0,0,0.18);
 }

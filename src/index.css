@@ -4,7 +4,6 @@ body {
   font-variant: small-caps;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  -webkit-overflow-scrolling: touch;
 }
 
 button, input, select, textarea {
@@ -13,5 +12,5 @@ button, input, select, textarea {
 }
 
 .App {
-  min-height: 100vh;
+  height: 100%;
 }

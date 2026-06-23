@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 
 export default function DisclaimerModal({ onAccept, onDecline }) {
+  const bodyRef = useRef(null);
+  const [scrolledToBottom, setScrolledToBottom] = useState(false);
+
+  const handleScroll = () => {
+    const el = bodyRef.current;
+    if (!el) return;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 8) {
+      setScrolledToBottom(true);
+    }
+  };
+
   return (
     <div className="modal-backdrop">
       <div className="modal-sheet disclaimer-modal">
         <h2 className="disclaimer-title">Before You Continue</h2>
 
-        <div className="disclaimer-body">
+        <div className="disclaimer-body" ref={bodyRef} onScroll={handleScroll}>
           <section className="disclaimer-section">
             <h4>Sweepstakes Legality</h4>
             <p>
@@ -55,15 +66,21 @@ export default function DisclaimerModal({ onAccept, onDecline }) {
         </div>
 
         <p className="disclaimer-confirm-text">
-          By clicking <strong>I Accept</strong>, you confirm you have read and understood the above,
-          and that participation in this sweepstakes is legal in your jurisdiction.
+          {scrolledToBottom
+            ? <>By clicking <strong>I Accept</strong>, you confirm you have read and understood the above, and that participation in this sweepstakes is legal in your jurisdiction.</>
+            : 'Scroll to the bottom to continue.'}
         </p>
 
         <div className="disclaimer-actions">
           <button className="select-btn disclaimer-decline-btn" onClick={onDecline}>
             I Do Not Accept
           </button>
-          <button className="select-btn disclaimer-accept-btn" onClick={onAccept}>
+          <button
+            className="select-btn disclaimer-accept-btn"
+            onClick={onAccept}
+            disabled={!scrolledToBottom}
+            style={!scrolledToBottom ? { opacity: 0.35, cursor: 'not-allowed' } : undefined}
+          >
             I Accept
           </button>
         </div>

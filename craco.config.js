@@ -1,6 +1,15 @@
 const webpack = require('webpack');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = {
+  devServer: {
+    https: {
+      key:  fs.readFileSync(path.resolve(__dirname, '192.168.1.116+2-key.pem')),
+      cert: fs.readFileSync(path.resolve(__dirname, '192.168.1.116+2.pem')),
+    },
+    host: '0.0.0.0',
+  },
   webpack: {
     configure: (webpackConfig) => {
       const wasmExtensionRegExp = /\.wasm$/;
