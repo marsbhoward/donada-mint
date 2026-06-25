@@ -57,10 +57,14 @@ Edit [public/data/collection.json](public/data/collection.json). Each entry requ
 ```json
 {
   "name": "Donada 0001",
-  "ipfsCid": "<CID from Blockfrost IPFS>",
+  "ipfsCid": "QmZZFNde4EEBKcSDvjDjgRbdm71KEdax7dsvTjdQcKGx9n",
   "mediaType": "image/jpeg",
-  "description": "...",
-  "traits": { "Collection": "Donada01", "Type": "...", "Artist": "..." }
+  "description": "Donada01 NFT collection",
+  "traits": {
+    "Collection": "Donada0001",
+    "Type": "Rainbow",
+    "Artist": "Luna"
+  }
 }
 ```
 

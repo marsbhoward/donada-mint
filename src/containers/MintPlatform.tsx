@@ -19,13 +19,13 @@ const JACKPOT_PERCENT      = 0.20;           // 20% of total mint revenue
 
 // Project wallet — receives the mint price.
 const PROJECT_WALLET_ADDRESS =
-  'addr_test1qz8a7xrhfh845uw0qvcvkll6m4p2ntyexghz2etpk4gpknm8x3f9dwp37v9xese67nv0nnczvkzqh60z30n6v9cw2fasq4l388';
+  'addr1q8nt3e6qwx56e2t7qqv5va396dcdut0s3ytzty8ae040g746ha2ue745hcqxzy9qcrfa08u4yl67p9y7wm9nn7g3e06sjy8q0s';
 
-const COLLECTION_NAME = 'DONADA Mint';
+const COLLECTION_NAME = 'DONADA0001';
 
 // Optional: hardcode the policy ID to skip plutus.json loading (useful for frontend testing).
 // Leave blank ('') to derive it dynamically from public/data/plutus.json at runtime.
-const MINT_POLICY_ID = ''; // set to override plutus.json derivation (e.g. for testing)
+const MINT_POLICY_ID = 'f3cfe3e83aa282cde0f6d67e79860ccaa55969a4b685db614055fc2f'; // set to override plutus.json derivation (e.g. for testing)
 
 // Cache minted names in sessionStorage with a TTL so simultaneous page loads
 // don't each fire their own Koios requests.
@@ -192,7 +192,7 @@ function getAvailableWallets(): WalletInfo[] {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function MintPlatform() {
-  const [network, setNetwork] = useState<Network>('Preview');
+  const [network, setNetwork] = useState<Network>('Mainnet');
 
   // Wallet
   const [wallets, setWallets]                     = useState<WalletInfo[]>([]);
@@ -263,10 +263,15 @@ export default function MintPlatform() {
   const [burnResults, setBurnResults]           = useState<Record<string, string>>({});
   const [priceExpanded, setPriceExpanded]       = useState(false);
   const [jackpotExpanded, setJackpotExpanded]   = useState(false);
+  const [logoDropdownOpen, setLogoDropdownOpen] = useState(false);
   const infoSectionsRef = useRef<HTMLDivElement>(null);
+  const logoDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (logoDropdownRef.current && !logoDropdownRef.current.contains(e.target as Node)) {
+        setLogoDropdownOpen(false);
+      }
       if (window.innerWidth > 820) return;
       if (infoSectionsRef.current && !infoSectionsRef.current.contains(e.target as Node)) {
         setPriceExpanded(false);
@@ -628,10 +633,21 @@ export default function MintPlatform() {
   return (
     <div className={`app-container${isDimming ? ' dimming' : ''}`}>
       <header className="header">
-        <div className="logo-group">
-          <h1 className="logo">
-            <a href="https://donada.io" target="_blank" rel="noopener noreferrer"><span className="logo-don">DON</span><span className="logo-ada">ADA</span> MINT</a>
-          </h1>
+        <div className="logo-group" ref={logoDropdownRef}>
+          <button className="logo" onClick={() => setLogoDropdownOpen(o => !o)}>
+            <img src="/Donada_Logo.png" alt="DONADA" className="logo-img" />
+            <span><span className="logo-don">DON</span><span className="logo-ada">ADA</span></span>
+          </button>
+          {logoDropdownOpen && (
+            <div className="logo-dropdown">
+              <a className="logo-dropdown-item" href="https://donada.io">DONADA</a>
+              <a className="logo-dropdown-item" href="https://app.donada.io">DONADA App</a>
+              <span className="logo-dropdown-item logo-dropdown-active">DONADA Mint <span className="logo-dropdown-dot" /></span>
+            </div>
+          )}
+        </div>
+
+        <div className="user-controls">
           <button className="theme-toggle" onClick={() => {
             setIsDimming(true);
             setTimeout(() => {
@@ -661,9 +677,6 @@ export default function MintPlatform() {
               </svg>
             )}
           </button>
-        </div>
-
-        <div className="user-controls">
           <div className="sign-btn-wrapper">
             <button
               className={`select-btn sign-btn-${signBtnAnim}`}
