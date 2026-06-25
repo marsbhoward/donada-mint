@@ -34,5 +34,7 @@ jobs:
           server: ${{ secrets.BLUEHOST_FTP_HOST }}
           username: ${{ secrets.BLUEHOST_FTP_USER }}
           password: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
           local-dir: ./build/
-          server-dir: ./mint.donada.io/
+          server-dir: ./
