@@ -1,0 +1,38 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - production
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+        env:
+          REACT_APP_BlockFrost_API_KEY_Mainnet: ${{ secrets.BLOCKFROST_API_KEY_MAINNET }}
+
+      - name: Deploy to Bluehost via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.BLUEHOST_FTP_HOST }}
+          username: ${{ secrets.BLUEHOST_FTP_USER }}
+          password: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
+          local-dir: ./build/
+          server-dir: ./public_html/mint/
