@@ -2,12 +2,14 @@ const webpack = require('webpack');
 const fs = require('fs');
 const path = require('path');
 
+const certPath = path.resolve(__dirname, '192.168.1.116+2-key.pem');
+const devServerHttps = fs.existsSync(certPath)
+  ? { key: fs.readFileSync(certPath), cert: fs.readFileSync(path.resolve(__dirname, '192.168.1.116+2.pem')) }
+  : undefined;
+
 module.exports = {
   devServer: {
-    https: {
-      key:  fs.readFileSync(path.resolve(__dirname, '192.168.1.116+2-key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, '192.168.1.116+2.pem')),
-    },
+    ...(devServerHttps ? { https: devServerHttps } : {}),
     host: '0.0.0.0',
   },
   webpack: {
