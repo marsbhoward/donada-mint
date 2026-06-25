@@ -28,13 +28,13 @@ jobs:
         env:
           REACT_APP_BlockFrost_API_KEY_Mainnet: ${{ secrets.BLOCKFROST_API_KEY_MAINNET }}
 
-      - name: Deploy to Bluehost via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Deploy to Bluehost via SFTP
+        uses: appleboy/scp-action@v0.1.7
         with:
-          server: ${{ secrets.BLUEHOST_FTP_HOST }}
-          username: ${{ secrets.BLUEHOST_FTP_USER }}
-          password: ${{ secrets.BLUEHOST_FTP_PASSWORD }}
-          protocol: ftps
-          port: 21
-          local-dir: ./build/
-          server-dir: ./
+          host: ${{ secrets.BLUEHOST_SSH_HOST }}
+          username: ${{ secrets.BLUEHOST_SSH_USER }}
+          password: ${{ secrets.BLUEHOST_SSH_PASSWORD }}
+          port: 22
+          source: "build/*"
+          target: "mint.donada.io"
+          strip_components: 1
