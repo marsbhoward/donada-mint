@@ -28,6 +28,7 @@
 
 use aiken/collection/dict
 use aiken/collection/list
+use aiken/interval.{Finite}
 use cardano/address.{VerificationKey}
 use cardano/assets
 use cardano/transaction.{Output, Transaction}
@@ -37,6 +38,10 @@ use cardano/transaction.{Output, Transaction}
 /// Mint price in lovelace.  498 ADA — user's total out-of-pocket is ~500 ADA
 /// once the ~0.5 ADA tx fee and ~1.5 ADA min-ADA deposit are included.
 const mint_price: Int = 498_000_000
+
+/// Launch time — 2026-07-31 3:00 PM CDT (UTC-5) in POSIX milliseconds.
+/// Minting transactions must have a lower validity bound at or after this time.
+const launch_time: Int = 1_754_082_000_000
 
 /// Payment key hash of the project wallet.
 /// Derived from addr_test1qz8a7xrhfh845uw0qvcvkll6m4p2ntyexghz2etpk4gpknm8x3f9dwp37v9xese67nv0nnczvkzqh60z30n6v9cw2fasq4l388
@@ -81,7 +86,13 @@ validator mint_nft {
         },
       )
 
-      token_count >= 1 && token_count <= 5 && each_quantity_is_one && total_to_project >= mint_price * token_count
+      // Rule 3: transaction lower bound must be at or after launch time
+      let after_launch = when tx.validity_range.lower_bound.bound_type is {
+        Finite(start) -> start >= launch_time
+        _ -> False
+      }
+
+      token_count >= 1 && token_count <= 5 && each_quantity_is_one && total_to_project >= mint_price * token_count && after_launch
     }
   }
 
